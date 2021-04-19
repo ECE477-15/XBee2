@@ -1,0 +1,109 @@
+/*
+ * ringBuf.c
+ *
+ *  Created on: Apr 14, 2021
+ *      Author: grantweiss
+ */
+
+#include "ringBuf.h"
+#include <string.h>
+
+uint16_t buf_writeStr(const char *str, Buffer *buffer) {
+	int strLen = strlen(str);
+
+	if(strLen > BUF_AVAIL(buffer)) {
+		return 0;
+	}
+
+	if(buffer->head + strLen < BUFFER_SIZE) { // single memcpy, not circular
+		memcpy(&(buffer->buffer[buffer->head]), str, strLen);
+		buffer->head += strLen;
+	} else { // two memcpy, circular
+		int firstSize = BUFFER_SIZE - buffer->head;
+		memcpy(&(buffer->buffer[buffer->head]), str, firstSize);
+
+		int secondSize = strLen - firstSize;
+		memcpy(&(buffer->buffer[0]), &(str[firstSize]), secondSize);
+
+		buffer->head = secondSize;
+	}
+
+	return 1;
+}
+
+uint16_t buf_writeChars(Buffer *buffer, const char *str, size_t strLen) {
+	if(strLen > BUF_AVAIL(buffer)) {
+		return 0;
+	}
+
+	if(buffer->head + strLen < BUFFER_SIZE) { // single memcpy, not circular
+		memcpy(&(buffer->buffer[buffer->head]), str, strLen);
+		buffer->head += strLen;
+	} else { // two memcpy, circular
+		int firstSize = BUFFER_SIZE - buffer->head;
+		memcpy(&(buffer->buffer[buffer->head]), str, firstSize);
+
+		int secondSize = strLen - firstSize;
+		memcpy(&(buffer->buffer[0]), &(str[firstSize]), secondSize);
+
+		buffer->head = secondSize;
+	}
+
+	return 1;
+}
+
+//uint16_t buf_ok(Buffer *buffer) {
+//	const char * str = "OK\r";
+//	const uint16_t strLen = 3;
+//
+//	int index = buffer->head - 1;
+//	if(index < 0) {
+//		index += buffer->len;
+//	}
+//
+//	for(int i = strLen-1; i >= 0; i--) {
+//		if(buffer->buffer[index] != str[i]) {
+//			return 0;
+//		}
+//		index--;
+//		if(index < 0) {
+//			index += buffer->len;
+//		}
+//	}
+//	return 1;
+//}
+
+#define GET_AT(BUF, ind) ( BUF->buffer[(((ind) + (BUFFER_SIZE)) % (BUFFER_SIZE))] )
+
+uint16_t buf_ok(Buffer *buffer) {
+	if(GET_AT(buffer, buffer->head-3) == 'O' && GET_AT(buffer, buffer->head-2) == 'K' && GET_AT(buffer, buffer->head-1) == '\r') {
+		return 1;
+	}
+	return 0;
+}
+
+uint16_t buf_crcr(Buffer *buffer) {
+	if(GET_AT(buffer, buffer->head-1) == '\r' && GET_AT(buffer, buffer->head-2) == '\r') {
+		return 1;
+	}
+	return 0;
+}
+
+void buf_pop(Buffer *buffer, uint16_t len) {
+	buffer->head -= len;
+	if(buffer->head < 0) {
+		buffer->head += buffer->len;
+	}
+}
+
+uint16_t buf_writeByte(unsigned char c, Buffer *buffer) {
+	int i = (unsigned int)(buffer->head + 1) % BUFFER_SIZE;
+
+	if(i != buffer->tail) {
+		buffer->buffer[buffer->head] = c;
+		buffer->head = i;
+		return 1;
+	} else {	// buffer overflow
+		return 0;
+	}
+}

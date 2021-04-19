@@ -24,7 +24,7 @@ int main(void)
 {
 	HAL_Init();
 	uart2_init();
-	sendGenericMessage();
+//	sendGenericMessage();
 	return 1;
 	xbee_setup();
 

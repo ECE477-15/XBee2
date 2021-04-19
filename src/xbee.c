@@ -4,7 +4,7 @@
  *  Created on: Apr 14, 2021
  *      Author: grantweiss
  */
-
+#if 0
 #include "xbee.h"
 #include "ringBuf.h"
 #include "main.h"
@@ -300,3 +300,4 @@ void sendGenericMessage() {
 	test = packet.addr_l;
 
 }
+#endif

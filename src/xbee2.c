@@ -8,12 +8,17 @@
 #include "xbee2.h"
 #include "main.h"
 
+/********************** FUNCTION DECLARATIONS **********************/
 void xbee_send_at(char * str, bool check);
 
+/********************** VARIABLES **********************/
+uint8_t frameID = 0x1;
+
+/********************** FUNCTION DEFINITIONS **********************/
 void xbee_setup() {
 	// Enter into AT Command Mode
 	HAL_Delay(1100);
-	send_simple_command(XBEE_AT_ENTERCMD, true);
+	xbee_send_at(XBEE_AT_ENTERCMD, true);
 	HAL_Delay(1100);
 
 	xbee_send_at(XBEE_AT_RESTORE	"\r", 		true);	// Reset settings, expect OK

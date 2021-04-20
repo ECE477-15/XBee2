@@ -17,42 +17,49 @@
 #include "uart.h"
 #include "main.h"
 
-static char* const commandList[] = {"AT\r", "ATND\r"};
-
-
 int main(void)
 {
 	HAL_Init();
 	uart2_init();
-//	sendGenericMessage();
-	return 1;
 	xbee_setup();
 
-	char payload2[] = "HELLO";
-	send_message(sizeof(payload2)-1, payload2, 0x13A200, 0x41A1D6AF);
+	tx_req_frame_t txReq = {
+			.addrH = ENDIAN_SWAP32(0x0),
+			.addrL = ENDIAN_SWAP32(0xFFFF),
+	};
+	char payload[] = "HELLOTEST";
+	xbee_msg->payload = (uint8_t *)payload;
+	xbee_msg->payloadLen = strlen(payload);
+	xbee_send_message(&txReq);
 
-	network_discovery();
 
-	return 1;
+	// be prepared for incoming xbee message
+	uart2_update_match(XBEE_CTRL_START);
+	uart2_receive();
 
-	uint16_t commandIndex = 0;
-	uart2_transmit(commandList[commandIndex]);
+	uint16_t xbee_status = 0;
+	uint32_t xbee_length = 0;
 
 	while(1) {
 		if(uartFlag != 0) {
-			// received a newline
-			if(buf_ok(uart2_rx_buffer) == 1) {
-//				buf_clear(uart2_rx_buffer);
-
-				if(++commandIndex < 2) {
-					uart2_transmit(commandList[commandIndex]);
-				}
-			} else {
-				error(__LINE__);
-			}
+			xbee_status = 1; // xbee frame started
 			uartFlag = 0;
 		}
-		HAL_Delay(1);
+		if(xbee_status > 0) {
+			if(xbee_status == 1 && BUF_USED(uart2_rx_buffer) >= 4) {
+				if(BUF_GET_AT(uart2_rx_buffer, (uart2_rx_buffer->tail + 3)) != XBEE_FRAME_RX_PACKET) {
+					error(__LINE__);
+				}
+				xbee_length = (BUF_GET_AT(uart2_rx_buffer, (uart2_rx_buffer->tail + 1)) << 8) | BUF_GET_AT(uart2_rx_buffer, (uart2_rx_buffer->tail + 2));
+				xbee_status = 2;	// xbee frame length available
+			} else if(xbee_status == 2 && BUF_USED(uart2_rx_buffer) == (xbee_length + 4)) {
+				xbee_status = 3;
+			} else if(xbee_status == 3) {
+				// packet complete
+				xbee_rx_complete(xbee_length);
+				xbee_status = 0;
+			}
+		}
 	}
 }
 

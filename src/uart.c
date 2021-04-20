@@ -15,7 +15,7 @@ Buffer _uart2_rx_buffer = {.head=0, .tail=0, .len=BUFFER_SIZE};
 Buffer *uart2_tx_buffer = &_uart2_tx_buffer;
 Buffer *uart2_rx_buffer = &_uart2_rx_buffer;
 
-uint16_t uartFlag = 0;
+volatile uint16_t uartFlag = 0;
 
 void uart2_receive() {
 	// Enable the UART Error Interrupt: (Frame error, noise error, overrun error)
@@ -105,9 +105,9 @@ void USART2_IRQHandler(void) {
 			if (IS_RECEIVING) {
 				char receiveData = (char) READ_REG(USART2->RDR);
 
-				if(receiveData == '\r') {
-					uartFlag = 1;
-				}
+//				if(receiveData == '\r') {
+//					uartFlag = 1;
+//				}
 				if(READ_BIT(isrflags, USART_ISR_CMF) != RESET) {
 					WRITE_REG(USART2->ICR, USART_ICR_CMCF);
 					uartFlag = 1;

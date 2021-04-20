@@ -73,17 +73,15 @@ uint16_t buf_writeChars(Buffer *buffer, const char *str, size_t strLen) {
 //	return 1;
 //}
 
-#define GET_AT(BUF, ind) ( BUF->buffer[(((ind) + (BUFFER_SIZE)) % (BUFFER_SIZE))] )
-
 uint16_t buf_ok(Buffer *buffer) {
-	if(GET_AT(buffer, buffer->head-3) == 'O' && GET_AT(buffer, buffer->head-2) == 'K' && GET_AT(buffer, buffer->head-1) == '\r') {
+	if(BUF_GET_AT(buffer, buffer->head-3) == 'O' && BUF_GET_AT(buffer, buffer->head-2) == 'K' && BUF_GET_AT(buffer, buffer->head-1) == '\r') {
 		return 1;
 	}
 	return 0;
 }
 
 uint16_t buf_crcr(Buffer *buffer) {
-	if(GET_AT(buffer, buffer->head-1) == '\r' && GET_AT(buffer, buffer->head-2) == '\r') {
+	if(BUF_GET_AT(buffer, buffer->head-1) == '\r' && BUF_GET_AT(buffer, buffer->head-2) == '\r') {
 		return 1;
 	}
 	return 0;
@@ -96,7 +94,11 @@ void buf_pop(Buffer *buffer, uint16_t len) {
 	}
 }
 
-uint16_t buf_writeByte(unsigned char c, Buffer *buffer) {
+void buf_pop_tail(Buffer *buffer, uint16_t len) {
+	buffer->tail = (buffer->tail + len) % BUFFER_SIZE;
+}
+
+uint16_t buf_writeByte(Buffer *buffer, unsigned char c) {
 	int i = (unsigned int)(buffer->head + 1) % BUFFER_SIZE;
 
 	if(i != buffer->tail) {

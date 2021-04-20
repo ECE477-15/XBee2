@@ -16,6 +16,7 @@
 
 #define BUF_USED(buffer) ((buffer->head - buffer->tail + BUFFER_SIZE) % BUFFER_SIZE)
 #define BUF_AVAIL(buffer) (BUFFER_SIZE - ((buffer->head - buffer->tail + BUFFER_SIZE) % BUFFER_SIZE) - 1)
+#define BUF_GET_AT(BUF, ind) ( BUF->buffer[(((ind) + (BUFFER_SIZE)) % (BUFFER_SIZE))] )
 
 #define BUF_PUSH(c, buf) buf->buffer[buf->head] = c; \
 	buf->head = (unsigned int)(buf->head + 1) % BUFFER_SIZE
@@ -48,8 +49,9 @@ uint16_t buf_writeStr(const char *str, Buffer *buffer);
 uint16_t buf_ok(Buffer *buffer);
 uint16_t buf_crcr(Buffer *buffer);
 void buf_pop(Buffer *buffer, uint16_t len);
-uint16_t buf_writeByte(unsigned char c, Buffer *buffer);
+uint16_t buf_writeByte(Buffer *buffer, unsigned char c);
 uint16_t buf_writeChars(Buffer *buffer, const char *str, size_t strLen);
+void buf_pop_tail(Buffer *buffer, uint16_t len);
 
 /********************** VARIABLES **********************/
 Buffer *uart2_tx_buffer;

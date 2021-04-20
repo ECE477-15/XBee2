@@ -19,7 +19,7 @@ void uart2_receive(void);
 
 Buffer *uart2_tx_buffer;
 Buffer *uart2_rx_buffer;
-uint16_t uartFlag;
+volatile uint16_t uartFlag;
 void uart2_update_match(uint8_t);
 
 #endif /* UART_H_ */
